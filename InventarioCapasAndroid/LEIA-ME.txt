@@ -1,0 +1,16 @@
+INVENTÁRIO DE CAPAS DEXCO D063 - PROJETO ANDROID OFFLINE
+
+Este pacote é um projeto Android Studio para gerar um APK. NÃO É UM APK COMPILADO.
+
+COMO GERAR O APK
+1. Instale Android Studio com Android SDK 35 e JDK 17.
+2. Abra esta pasta como projeto (File > Open). Aguarde sincronizar Gradle.
+3. Build > Build Bundle(s) / APK(s) > Build APK(s).
+4. Localize app/build/outputs/apk/debug/app-debug.apk.
+5. Transfira o APK para o tablet e instale (dependendo da política de TI).
+
+O aplicativo opera offline com IndexedDB interno do WebView.
+Exportar CSV grava o arquivo em Downloads do tablet (Android 10 ou superior).
+Não desinstale nem limpe dados do aplicativo antes de exportar: isso apaga os registros locais.
+O armazenamento deste APK é separado dos dados anteriormente salvos no navegador Chrome.
+O projeto deve ser compilado e testado no Android Studio; nenhum APK foi gerado neste ambiente.
