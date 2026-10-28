@@ -32,14 +32,20 @@ jobs:
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Verificar arquivos do projeto
+        run: |
+          pwd
+          ls -la
+          ls -la InventarioCapasAndroid
+
       - name: Gerar APK
-        working-directory: InventárioCapasAndroid
+        working-directory: InventarioCapasAndroid
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
           name: Inventario-Capas-Dexco-APK
-          path: InventárioCapasAndroid/app/build/outputs/apk/debug/*.apk
+          path: InventarioCapasAndroid/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 30
