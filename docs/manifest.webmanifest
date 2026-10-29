@@ -1,0 +1,21 @@
+
+{
+  "name": "Inventário de Capas Dexco",
+  "short_name": "Inventário Capas",
+  "description": "Aplicativo de inventário de capas das unidades Dexco",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f6",
+  "theme_color": "#151515",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "./apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
