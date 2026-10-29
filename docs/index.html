@@ -64,4 +64,12 @@ function enterUser(name,unit){activeUser=name.trim();activeUnit=unit;if(!activeU
 document.getElementById('loginForm').addEventListener('submit',function(e){e.preventDefault();const name=document.getElementById('loginName').value.trim();const unit=document.getElementById('loginUnit').value;if(!name||!units[unit]){document.getElementById('loginError').textContent='Informe o responsável e selecione a unidade.';return;}document.getElementById('loginError').textContent='';enterUser(name,unit);});
 document.getElementById('logout').addEventListener('click',function(){activeUser='';activeUnit='';document.getElementById('currentUnit').textContent='Unidade não selecionada';document.getElementById('sessionBar').style.display='none';document.getElementById('loginName').value='';document.getElementById('loginUnit').value='';document.getElementById('loginScreen').hidden=false;document.getElementById('loginName').focus();});
 })();
-</script><script>document.getElementById('toggleProducts').addEventListener('click',function(){const list=document.getElementById('productsList');const hidden=list.hidden=!list.hidden;this.textContent=hidden?'Mostrar itens':'Ocultar itens';this.setAttribute('aria-expanded',String(!hidden));});</script></body></html>
+</script><script>document.getElementById('toggleProducts').addEventListener('click',function(){const list=document.getElementById('productsList');const hidden=list.hidden=!list.hidden;this.textContent=hidden?'Mostrar itens':'Ocultar itens';this.setAttribute('aria-expanded',String(!hidden));});</script><script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (error) {
+      console.error('Erro ao ativar modo offline:', error);
+    });
+  });
+}
+</script></body></html>
