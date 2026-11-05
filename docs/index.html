@@ -53,13 +53,38 @@ function thickness(p){return ({'CP-FINA':2.7,'CP-MEDIA':15,'CP-GROSSA':25})[p.ty
 function selected(){return catalog.find(p=>String(p.code)===$('productCode').value)}
 function calc(){const p=selected(), packs=Number($('packages').value)||0,sheets=Number($('sheets').value)||0;const total=packs*sheets;const vol=p&&thickness(p)>0?total*thickness(p)*p.width*p.length/1e9:null;$('totalSheets').textContent=fmt(total);$('volume').textContent=vol===null?'0,000 m³':m3(vol);return {p,packs,sheets,total,vol}}
 function render(){const tbody=$('history');tbody.replaceChildren();let sum=0;const shown=records.filter(r=>recordUnit(r)===activeUnit);for(const r of [...shown].reverse()){sum+=Number(r.volume||0);const tr=document.createElement('tr');for(const value of [r.date||r.datetime||'',unitLabel(recordUnit(r)),r.responsavel||'',r.lote||'',r.description||r.material||'',r.position||'',r.packages||'',r.sheets||'',r.total||'',r.volume==null?'—':m3(r.volume)]){const td=document.createElement('td');td.textContent=value;tr.appendChild(td)}const td=document.createElement('td'),btn=document.createElement('button');btn.textContent='Excluir';btn.className='danger';btn.type='button';btn.addEventListener('click',()=>{if(confirm('Excluir este lançamento?')){records=records.filter(x=>x.id!==r.id);persist()}});td.appendChild(btn);tr.appendChild(td);tbody.appendChild(tr)}$('records').textContent=fmt(shown.length);$('sumVolume').textContent=m3(sum);$('pending').textContent=fmt(shown.length)}
-function persist(){try{localStorage.setItem(key,JSON.stringify(records));render();$('message').textContent='Contagem salva no dispositivo.'; $('message').className='ok'}catch(e){$('message').textContent='Não foi possível salvar: armazenamento indisponível.';$('message').className='warn'}}
+function persist(){try{localStorage.setItem(key,JSON.stringify(records));render();$('message').textContent='Contagem salva no dispositivo.'; $('message').className='ok';return true}catch(e){$('message').textContent='Não foi possível salvar: armazenamento indisponível.';$('message').className='warn';return false}}
 for(const id of ['productCode','product','packages','sheets'])$(id).addEventListener('input',calc);
 const conditionalFields=['productCode','product','productType','packages','sheets'];
 function updateRequired(){const hasLote=!!$('lote').value.trim();for(const id of conditionalFields)$(id).required=!hasLote;document.querySelectorAll('[data-required-label]').forEach(el=>el.hidden=hasLote);}
-$('lote').addEventListener('input',updateRequired);
+// Leitura automatica: Enter/Tab do scanner ou sequencia rapida sem terminador.
+ let scanTimer=null, scanLast=0, scanFast=0, scanBusy=false, scanIgnoreNextEnter=false;
+ const loteInput=$('lote');
+ function autoSaveLote(){
+   clearTimeout(scanTimer);scanTimer=null;
+   if(scanBusy||!loteInput.value.trim()||!activeUser||!activeUnit)return;
+   scanBusy=true;
+   try{$('form').requestSubmit()}finally{scanBusy=false}
+ }
+ loteInput.addEventListener('keydown',e=>{
+   if(e.key==='Enter'||e.key==='Tab'){
+     if(!loteInput.value.trim())return;
+     e.preventDefault();scanIgnoreNextEnter=true;
+     autoSaveLote();
+     setTimeout(()=>{scanIgnoreNextEnter=false},80);
+   }
+ });
+ loteInput.addEventListener('input',()=>{
+   updateRequired();clearTimeout(scanTimer);
+   const now=performance.now(),gap=now-scanLast;
+   scanFast=gap<90?scanFast+1:0;scanLast=now;
+   // Evita gravar automaticamente um lote digitado manualmente.
+   if(loteInput.value.trim().length>=5&&scanFast>=4){
+     scanTimer=setTimeout(()=>{scanFast=0;autoSaveLote()},350);
+   }
+ });
 updateRequired();
-$('form').addEventListener('submit',e=>{e.preventDefault();updateRequired();if(!activeUser||!activeUnit){document.getElementById('loginScreen').hidden=false;return;}const lote=$('lote').value.trim();const {p,packs,sheets,total,vol}=calc();if(!lote&&(!p||!Number.isInteger(packs)||packs<1||!Number.isInteger(sheets)||sheets<1)){$('message').textContent='Preencha o material e as quantidades corretamente.';$('message').className='warn';return;}const validQuantities=Number.isInteger(packs)&&packs>=1&&Number.isInteger(sheets)&&sheets>=1;const calculatedVolume=p&&validQuantities?vol:null;if(!lote&&calculatedVolume===null){$('message').textContent='Não é possível calcular m³ sem as dimensões do material.';$('message').className='warn';return;}records.push({id:Date.now()+'-'+Math.random(),date:new Date().toLocaleString('pt-BR'),unidade:activeUnit,responsavel:activeUser,lote,code:p?.code||'',description:p?.description||'',position:$('position').value,packages:$('packages').value===''?'':packs,sheets:$('sheets').value===''?'':sheets,total:validQuantities?total:'',volume:calculatedVolume});persist()});
+$('form').addEventListener('submit',e=>{e.preventDefault();updateRequired();if(!activeUser||!activeUnit){document.getElementById('loginScreen').hidden=false;return;}const lote=$('lote').value.trim();const {p,packs,sheets,total,vol}=calc();if(!lote&&(!p||!Number.isInteger(packs)||packs<1||!Number.isInteger(sheets)||sheets<1)){$('message').textContent='Preencha o material e as quantidades corretamente.';$('message').className='warn';return;}const validQuantities=Number.isInteger(packs)&&packs>=1&&Number.isInteger(sheets)&&sheets>=1;const calculatedVolume=p&&validQuantities?vol:null;if(!lote&&calculatedVolume===null){$('message').textContent='Não é possível calcular m³ sem as dimensões do material.';$('message').className='warn';return;}const newRecord={id:Date.now()+'-'+Math.random(),date:new Date().toLocaleString('pt-BR'),unidade:activeUnit,responsavel:activeUser,lote,code:p?.code||'',description:p?.description||'',position:$('position').value,packages:$('packages').value===''?'':packs,sheets:$('sheets').value===''?'':sheets,total:validQuantities?total:'',volume:calculatedVolume};records.push(newRecord);if(persist()){if(lote){$('lote').value='';updateRequired();scanFast=0;scanLast=0;$('lote').focus({preventScroll:true})}}else{records.pop()}});
 $('form').addEventListener('reset',()=>{setTimeout(()=>{$('totalSheets').textContent='0';$('volume').textContent='0,000 m³';$('message').textContent='';updateRequired()},0)});
 $('refresh').addEventListener('click',render);
 $('export').addEventListener('click',()=>{const cols=['date','unidade','responsavel','lote','code','description','position','packages','sheets','total','volume'];const esc=x=>'"'+String(x??'').replaceAll('"','""')+'"';const csv='\ufeff'+[cols.join(';'),...records.filter(r=>recordUnit(r)===activeUnit).map(r=>cols.map(c=>esc(c==='unidade'?recordUnit(r):r[c])).join(';'))].join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='inventario_capas_'+activeUnit+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
